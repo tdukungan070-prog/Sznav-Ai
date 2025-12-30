@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat - Sznav</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chat-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 15px;
+            margin-top: 5px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 25px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .ai-message {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 80%;
+            padding: 18px 22px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: 16px;
+            position: relative;
+        }
+
+        .user-message .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message .message-content {
+            background: white;
+            color: #333;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-bottom-left-radius: 5px;
+        }
+
+        .signature {
+            font-size: 12px;
+            color: #764ba2;
+            text-align: center;
+            margin-top: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-input-container {
+            padding: 25px 30px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 18px 25px;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #messageInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #sendButton {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0 35px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendButton:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendButton:active {
+            transform: translateY(0);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .typing-dots {
+            display: inline-block;
+            padding: 18px 22px;
+            background: white;
+            border-radius: 20px;
+            border-bottom-left-radius: 5px;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #764ba2;
+            margin: 0 3px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .chat-container {
+                height: 90vh;
+                border-radius: 15px;
+            }
+            
+            .message-content {
+                max-width: 90%;
+                padding: 15px 18px;
+                font-size: 15px;
+            }
+            
+            .chat-header {
+                padding: 20px;
+            }
+            
+            .chat-header h1 {
+                font-size: 24px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            #sendButton {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>AI Assistant Sznav</h1>
+            <p>Tanyakan apa saja, saya akan membantu Anda</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- Pesan akan dimuat di sini -->
+            <div class="message ai-message">
+                <div class="message-content">
+                    Halo! Saya AI Assistant. Ada yang bisa saya bantu hari ini?
+                    <div class="signature">Sznav  AI</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="messageInput" 
+                    placeholder="Ketik pesan Anda di sini..." 
+                    autocomplete="off"
+                >
+                <button id="sendButton">Kirim</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://ai-gateway.vercel.sh/v1/chat/completions';
+        const API_KEY = 'vck_0w2x57JQ3SAwckuyB2OJDVp2sow3TB4ajADjPOF6rK7geLETdx2PjPlK';
+
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        // Fungsi untuk menambahkan pesan ke chat
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content;
+            
+            if (!isUser) {
+                const signature = document.createElement('div');
+                signature.className = 'signature';
+                signature.textContent = 'sznav AI';
+                contentDiv.appendChild(signature);
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll ke bawah
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return messageDiv;
+        }
+
+        // Fungsi untuk mengirim pesan ke API 
+        async function sendMessageToAI(message) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'Anda adalah asisten AI yang membantu. Jawablah dengan ramah dan informatif.'
+                            },
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    return data.choices[0].message.content;
+                } else {
+                    throw new Error('Format respons API tidak sesuai');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                return `Maaf, terjadi kesalahan: ${error.message}. Silakan coba lagi.`;
+            }
+        }
+
+        // Fungsi untuk menangani pengiriman pesan
+        async function handleSendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // Tambah pesan user
+            addMessage(message, true);
+            
+            // Clear input
+            messageInput.value = '';
+            messageInput.focus();
+            
+            // Tampilkan typing indicator
+            typingIndicator.style.display = 'block';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Nonaktifkan button sementara
+            sendButton.disabled = true;
+            
+            try {
+                // Dapatkan respons dari AI
+                const aiResponse = await sendMessageToAI(message);
+                
+                // Sembunyikan typing indicator
+                typingIndicator.style.display = 'none';
+                
+                // Tambah pesan AI dengan signature
+                addMessage(aiResponse, false);
+            } catch (error) {
+                typingIndicator.style.display = 'none';
+                addMessage(`Maaf, terjadi kesalahan: ${error.message}`, false);
+            }
+            
+            // Aktifkan button kembali
+            sendButton.disabled = false;
+        }
+
+        // Event Listeners
+        sendButton.addEventListener('click', handleSendMessage);
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+
+        // Auto-focus input saat halaman dimuat
+        messageInput.focus();
+
+        // Contoh pertanyaan cepat
+        window.askExample = function(question) {
+            messageInput.value = question;
+            handleSendMessage();
+        };
+    </script>
+</body>
+</html>
